@@ -25,6 +25,14 @@ function withQuery(pathname, query) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
+/** Drop the rewrite's own parameter without re-encoding the rest of the query. */
+function withoutCapturedParam(query) {
+  return query
+    .split('&')
+    .filter((pair) => pair && !/^gevPath(?:=|$)/.test(pair))
+    .join('&');
+}
+
 /**
  * The captured remainder the rewrite appended, read from the raw query so the
  * escapes inside it survive. Vercel may insert the path verbatim
@@ -52,31 +60,38 @@ export function rewrittenPath(req, query) {
  * Restore the `/api/...` URL the provider handlers expect.
  *
  * Vercel's `api/` filesystem routing only resolves one path segment, so nested
- * routes reach the function through the vercel.json rewrite as
- * `/api/index?gevPath=<remainder>`. Dev/preview servers, tests, and direct
- * filesystem hits already carry the original URL and are left untouched.
+ * routes reach the function through the vercel.json rewrite: normally as the
+ * preserved original URL with `gevPath` appended to the query, otherwise as
+ * `/api/index?gevPath=<remainder>`. The captured parameter must never reach a
+ * provider handler — weather rejects unknown query keys. Dev/preview servers
+ * and tests carry plain URLs and are left untouched.
  */
 export function ensureApiUrl(req) {
   const current = typeof req.url === 'string' ? req.url : '';
   const [pathname, query] = splitQuery(current);
 
   if (!ENTRY_PATH.test(pathname)) {
-    if (API_PATH.test(pathname)) return;
+    const cleaned = withoutCapturedParam(query);
+    if (API_PATH.test(pathname)) {
+      // The platform kept the original path but appended the rewrite's captured
+      // segment to the query; handlers with strict parameter allowlists (weather)
+      // refuse that extra key.
+      if (cleaned !== query) req.url = withQuery(pathname, cleaned);
+      return;
+    }
     // Vercel hands a catch-all function the captured segments in `query.path`.
     const segments = req.query?.path;
     if (!Array.isArray(segments) || !segments.length) return;
     req.url = withQuery(
       `/api/${segments.map((segment) => encodeURIComponent(segment)).join('/')}`,
-      query,
+      cleaned,
     );
     return;
   }
 
   const captured = rewrittenPath(req, query).replace(/^\/+/, '');
   if (!captured) return;
-  const params = new URLSearchParams(query);
-  params.delete('gevPath');
-  req.url = withQuery(`/api/${captured}`, params.toString());
+  req.url = withQuery(`/api/${captured}`, withoutCapturedParam(query));
 }
 
 /** Shared entry point for the Vercel function; exported for tests. */

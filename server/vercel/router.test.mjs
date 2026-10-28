@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import handler from '../../api/index.js';
 import { ensureApiUrl } from './handler.js';
 import { dispatch, createMiddlewareRouter } from './router.js';
+import { createProviderRouter } from './stack.js';
 
 function listen(handle) {
   return new Promise((resolve) => {
@@ -117,15 +118,38 @@ test('leaves an already rooted api url untouched', () => {
   assert.equal(req.url, '/api/celestrak/stations?x=1');
 });
 
+test('drops the captured parameter when the platform kept the path', () => {
+  // Production shape observed on Vercel: the original URL survives and the
+  // rewrite appends its captured segment, which strict handlers refuse.
+  for (const url of [
+    '/api/weather/manifest?product=clouds&gevPath=weather/manifest',
+    '/api/weather/manifest?gevPath=weather/manifest&product=clouds',
+  ]) {
+    const req = { url, query: {} };
+    ensureApiUrl(req);
+    assert.equal(req.url, '/api/weather/manifest?product=clouds');
+  }
+});
+
+test('drops the captured parameter without re-encoding the query', () => {
+  const upstream = 'https%3A%2F%2Fexample.com%2Ffeed%3Fa%3D1%26b%3D2';
+  const req = {
+    url: `/api/gbfs/${upstream}?gevPath=gbfs/${upstream}&gevPath=x`,
+    query: {},
+  };
+  ensureApiUrl(req);
+  assert.equal(req.url, `/api/gbfs/${upstream}`);
+});
+
 test('serves nested routes through the platform rewrite', async () => {
-  // Mirror vercel.json: /api/<rest>?<query> → /api/index?gevPath=<rest>&<query>.
+  // Mirror the deployment: the rewrite keeps the original path and appends the
+  // captured remainder to the query.
   const server = await listen((req, res) => {
     const url = new URL(req.url, 'http://localhost');
     if (/^\/api\//.test(url.pathname) && url.pathname !== '/api/index') {
-      const params = new URLSearchParams(url.search);
-      params.set('gevPath', url.pathname.slice('/api/'.length));
-      req.query = Object.fromEntries(params);
-      req.url = `/api/index?${params}`;
+      url.searchParams.set('gevPath', url.pathname.slice('/api/'.length));
+      req.query = Object.fromEntries(url.searchParams);
+      req.url = `${url.pathname}${url.search}`;
     }
     return handler(req, res);
   });
@@ -136,6 +160,65 @@ test('serves nested routes through the platform rewrite', async () => {
   } finally {
     await close(server);
   }
+});
+
+/**
+ * Every path the browser calls through `/api`. The vercel.json rewrite sends
+ * all of them to the single entry function, so the stack must mount each one.
+ */
+const REQUIRED_MOUNTS = [
+  '/api/flights',
+  '/api/flights/track',
+  '/api/celestrak',
+  '/api/tomtom',
+  '/api/firms',
+  '/api/launches',
+  '/api/terrain/heights',
+  '/api/adsbdb',
+  '/api/overpass',
+  '/api/route',
+  '/api/military-installations',
+  '/api/military',
+  '/api/military/track',
+  '/api/regional-brief',
+  '/api/geocode',
+  '/api/weather-effects',
+  '/api/cctv',
+  '/api/radio',
+  '/api/gbfs',
+  '/api/local-receivers/aircraft',
+  '/api/transit',
+  '/api/vessels',
+  '/api/openai/hud-summary',
+  '/api/realtime/debug-log',
+  '/api/realtime/token',
+  '/api/realtime/oauth-status',
+  '/api/realtime/oauth-login',
+  '/api/gemini/token',
+  '/api/google/nearby-places',
+  '/api/google/text-search',
+  '/api/google/geocode',
+  '/api/google/reverse-geocode',
+  '/api/wind',
+  '/api/weather',
+  '/api/cyclones',
+  '/api/mapillary/status',
+  '/api/mapillary/tiles',
+  '/api/fire-perimeters',
+  '/api/gnss-integrity',
+];
+
+test('mounts every provider route the app calls', () => {
+  const mounts = new Set(
+    createProviderRouter().entries.map((entry) => entry.mount),
+  );
+  assert.deepEqual(
+    REQUIRED_MOUNTS.filter((mount) => !mounts.has(mount)),
+    [],
+  );
+  // Credential setup writes .env and restarts a dev server; it must stay local.
+  assert.equal(mounts.has('/api/setup/keys'), false);
+  assert.equal(mounts.has('/api/setup/status'), false);
 });
 
 test('the Vercel entry mounts the provider stack', async () => {
