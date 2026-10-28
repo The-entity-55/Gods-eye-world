@@ -2538,7 +2538,6 @@
   "Active weather products": "已启用的天气产品",
   "RECENT IMAGERY": "近期影像",
   "Imagery days in the box": "视野内的影像天数",
-  "CONTEXT": "态势",
   "Compact Radio controls": "精简电台控件",
   "Open detailed Radio controls": "打开详细电台控件",
   "Previous station": "上一个电台",
@@ -2814,5 +2813,16 @@
   "Layers": "图层",
   "Search": "搜索",
   "More": "更多",
-  "Panels": "面板"
+  "Panels": "面板",
+  "ACQUIRING FIX...": "正在获取定位...",
+  "Requesting satellite geolocation fix...": "正在请求卫星地理定位...",
+  "Target acquired: {lat}°, {lon}° — Descending...": "已锁定目标: {lat}°, {lon}° — 正在下降...",
+  "Coordinates unavailable — opening default view...": "坐标不可用 — 正在打开默认视图...",
+  "Location access denied — opening globe view...": "位置访问被拒绝 — 正在打开全球视图...",
+  "Opening globe view...": "正在打开全球视图...",
+  "Awaiting operator target authorization...": "等待操作员目标授权...",
+  "ORBITAL TARGETING": "轨道目标锁定",
+  "Detect your location to deploy surveillance above you": "检测您的位置以在您上方部署监视",
+  "📍 APPROVE & LOCATE": "📍 允许并定位",
+  "🌐 EXPLORE GLOBE": "🌐 探索地球"
 }

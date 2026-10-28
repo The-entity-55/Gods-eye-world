@@ -518,13 +518,20 @@ export class PanelChrome {
       });
     }
     // A repeated Context-open request must clear a stale compact Radio mini
-    // even when no collapsed class changes.
-    if (
-      !nextCollapsed &&
-      panelId === 'global-context-panel' &&
-      this._contextRadioDock?.classList.contains('disclosure-open')
-    ) {
-      this._setRadioDisclosure?.(false);
+    // even when no collapsed class changes, and ensure radio-panel is uncollapsed.
+    if (!nextCollapsed && panelId === 'global-context-panel') {
+      if (this._contextRadioDock?.classList.contains('disclosure-open')) {
+        this._setRadioDisclosure?.(false);
+      }
+      const radioEl = document.getElementById('radio-panel');
+      if (radioEl?.classList.contains('collapsed')) {
+        this.setPanelCollapsed('radio-panel', false, {
+          explicit,
+          restore,
+          persist,
+          syncShare,
+        });
+      }
     }
     if (
       panelEl.classList.contains('collapsed') === nextCollapsed &&

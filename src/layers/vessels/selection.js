@@ -111,7 +111,14 @@ export function createSelection({
     // to another layer and takes interaction ownership of the scene.
     state.trackedEntityRemover = viewer.trackedEntityChanged.addEventListener(
       () => {
-        if (viewer.trackedEntity && state.selectedRecord)
+        const trackedVesselMmsi = String(
+          viewer.trackedEntity?.gevVesselInfo?.mmsi || '',
+        );
+        if (
+          viewer.trackedEntity &&
+          state.selectedRecord &&
+          trackedVesselMmsi !== String(state.selectedRecord.mmsi)
+        )
           clearVesselInspection();
       },
     );
@@ -163,6 +170,68 @@ export function createSelection({
     if (transition.action === 'deselect') {
       clearVesselInspection();
     }
+  }
+
+  /**
+   * Give the shared Cockpit controller a live entity for the selected vessel.
+   * AIS sprites live in a BillboardCollection, so they cannot themselves be
+   * tracked by Cesium. The callback follows that sprite without creating a
+   * second visible vessel on the map.
+   */
+  function prepareSelectedVesselForCockpit() {
+    const record = state.selectedRecord;
+    const viewer = state.viewer;
+    if (!state.feed.enabled || !record?.mmsi || !viewer?.entities) return null;
+    if (state.cockpitEntity && viewer.entities.contains(state.cockpitEntity))
+      return state.cockpitEntity;
+    const position = new Cesium.CallbackProperty((time, result) => {
+      vesselInfo.latitude = Number(record.lat);
+      vesselInfo.longitude = Number(record.lon);
+      vesselInfo.track = Number(record.course);
+      const currentSpeedKt = Number(record.speed);
+      vesselInfo.velocityMps = Number.isFinite(currentSpeedKt)
+        ? currentSpeedKt * 0.514444
+        : 0;
+      vesselInfo.stale = Boolean(record.stale);
+      const visual = components.rendering.getVisual(record);
+      const source = visual.billboard?.position || visual.position;
+      return source ? Cesium.Cartesian3.clone(source, result) : undefined;
+    }, false);
+    const vesselInfo = {
+      id: String(record.mmsi),
+      mmsi: String(record.mmsi),
+      layerId: 'ais-live-vessels',
+      callsign: record.name || String(record.mmsi),
+      registration: String(record.mmsi),
+      latitude: Number(record.lat),
+      longitude: Number(record.lon),
+      altitudeM: 0,
+      velocityMps: Number.isFinite(Number(record.speed))
+        ? Number(record.speed) * 0.514444
+        : 0,
+      track: Number(record.course),
+      stale: Boolean(record.stale),
+      vesselType: record.type || null,
+    };
+    state.cockpitEntity = viewer.entities.add({
+      position,
+      show: false,
+    });
+    // Entity only merges its documented properties, so app identity must be
+    // attached after creation rather than supplied as constructor options.
+    state.cockpitEntity.gevTrackedId = `ais-live-vessels:${record.mmsi}`;
+    state.cockpitEntity.gevVesselInfo = vesselInfo;
+    return state.cockpitEntity;
+  }
+
+  /** Remove the invisible Cockpit bridge and leave the vessel selected. */
+  function releaseSelectedVesselCockpit(entity = state.cockpitEntity) {
+    const viewer = state.viewer;
+    if (!entity || entity !== state.cockpitEntity) return false;
+    if (viewer?.trackedEntity === entity) viewer.trackedEntity = undefined;
+    if (viewer?.entities?.contains(entity)) viewer.entities.remove(entity);
+    state.cockpitEntity = null;
+    return true;
   }
 
   function selectVessel(record) {
@@ -226,6 +295,7 @@ export function createSelection({
   }
 
   function clearSelection({ preserveTrail = false, evicted = false } = {}) {
+    releaseSelectedVesselCockpit();
     const record = state.selectedRecord;
     if (components.rendering.getVisual(record)?.billboard) {
       components.rendering.getVisual(record).billboard.image =
@@ -262,6 +332,8 @@ export function createSelection({
     selectAndFocusVessel,
     removeVesselInteraction,
     onVesselKeyDown,
+    prepareSelectedVesselForCockpit,
+    releaseSelectedVesselCockpit,
     selectVessel,
     registerSelectedContext,
     clearSelection,

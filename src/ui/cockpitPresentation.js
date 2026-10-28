@@ -12,9 +12,9 @@ export const COCKPIT_MIN_GROUND_CLEARANCE_M = 12;
 
 export const COCKPIT_VIEW_PITCH_DEG = -4;
 
-export const COCKPIT_CAMERA_UPDATE_MS = 50;
+export const COCKPIT_CAMERA_UPDATE_MS = 0;
 
-export const COCKPIT_HUD_UPDATE_MS = 100;
+export const COCKPIT_HUD_UPDATE_MS = 33;
 
 export const COCKPIT_CONTEXT_UPDATE_MS = 250;
 

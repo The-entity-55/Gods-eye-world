@@ -49,7 +49,7 @@ export function createApplicationRequestServices({
       data,
     };
   }
-  function pointUrl(endpoint, latitude, longitude) {
+  function pointUrl(endpoint, latitude, longitude, preferences = null) {
     if (
       !Number.isFinite(latitude) ||
       latitude < -90 ||
@@ -59,7 +59,21 @@ export function createApplicationRequestServices({
       longitude > 180
     )
       throw new TypeError('Valid coordinates are required');
-    return `${endpoint}?${new URLSearchParams({ latitude: latitude.toFixed(5), longitude: longitude.toFixed(5) })}`;
+    const params = new URLSearchParams({
+      latitude: latitude.toFixed(5),
+      longitude: longitude.toFixed(5),
+    });
+    for (const [key, maxLength] of Object.entries({
+      scope: 6,
+      topics: 300,
+      countries: 20,
+      domains: 500,
+      language: 2,
+    })) {
+      const value = String(preferences?.[key] || '').trim();
+      if (value && value.length <= maxLength) params.set(key, value);
+    }
+    return `${endpoint}?${params}`;
   }
   function requireOk(response, label) {
     if (!response.ok)
@@ -159,9 +173,12 @@ export function createApplicationRequestServices({
       },
     },
     regional: {
-      async getBrief(latitude, longitude, options) {
+      async getBrief(latitude, longitude, { preferences, ...options } = {}) {
         return requireOk(
-          await request(pointUrl(urls.regional, latitude, longitude), options),
+          await request(
+            pointUrl(urls.regional, latitude, longitude, preferences),
+            options,
+          ),
           'Regional brief',
         );
       },

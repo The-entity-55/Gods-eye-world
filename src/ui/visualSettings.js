@@ -1557,6 +1557,9 @@ export class VisualSettings {
       }
     }
     if (styleName === this.activeStyle) {
+      if (applyPreset) {
+        this._applyStylePresetDefaults(styleName);
+      }
       if (revealParameters && styleName !== 'normal')
         this._revealStyleParameters();
       return;

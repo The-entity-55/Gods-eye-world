@@ -1152,6 +1152,11 @@ export class ShellFacade {
     return this._cockpitCoordinator.controlCockpit(...args);
   }
 
+  /** Enter/exit Cockpit for the selected aircraft or vessel from the A shortcut. */
+  toggleShortcutCockpit(...args) {
+    return this._cockpitCoordinator.toggleShortcutCockpit(...args);
+  }
+
   /**
    * Snapshots the full visual state (active style, bloom, sharpen, HUD, detection,
    * per-style shader uniform values) for serialization or scene recipe capture.

@@ -2,6 +2,7 @@ import { indexMapSources } from './registry.js';
 import * as Cesium from 'cesium';
 import { createMapCredits } from './credits.js';
 import { acquireImageryComparison } from './imageryComparison.js';
+import { createDayNightCustomShader } from './dayNightShader.js';
 
 /**
  * Private `setStack` option marking a switch the controller issues itself
@@ -276,6 +277,9 @@ export class MapSourceController {
   }
 
   _showTileset(active) {
+    if (active && !active.customShader && Cesium.CustomShader) {
+      active.customShader = createDayNightCustomShader(Cesium);
+    }
     for (const source of this._sources.values())
       if (source.tileset) source.tileset.show = source.tileset === active;
     for (const tileset of this._ownedTilesets)

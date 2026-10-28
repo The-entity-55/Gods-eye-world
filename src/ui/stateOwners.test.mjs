@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { NavigationController } from './navigationController.js';
-import { ShareRestoration } from './shareRestoration.js';
+import { ShareRestoration, isDefaultAustinState } from './shareRestoration.js';
 
 function navigation() {
   const tracking = Object.fromEntries(
@@ -140,4 +140,33 @@ test('visual teardown restores owned fog and aircraft sensor state once', async 
   ]);
   assert.equal(owner._irBoostActive, false);
   owner.destroy();
+});
+
+test('isDefaultAustinState detects unshared default session hash but respects explicit shares', () => {
+  // Typical default camera pose written by _updateHash() after startup flight
+  assert.equal(
+    isDefaultAustinState({ lat: 30.2641, lon: -97.7441, sharedAtMs: null }),
+    true,
+  );
+  assert.equal(
+    isDefaultAustinState({ lat: 30.2672, lon: -97.7431, sharedAtMs: null }),
+    true,
+  );
+
+  // Explicit share link with sharedAtMs timestamp must not be treated as default
+  assert.equal(
+    isDefaultAustinState({
+      lat: 30.2641,
+      lon: -97.7441,
+      sharedAtMs: 1700000000000,
+    }),
+    false,
+  );
+
+  // Different location (e.g. Tokyo, London, San Francisco) is never default Austin
+  assert.equal(
+    isDefaultAustinState({ lat: 35.6762, lon: 139.6503, sharedAtMs: null }),
+    false,
+  );
+  assert.equal(isDefaultAustinState(null), false);
 });

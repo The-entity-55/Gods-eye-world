@@ -52,6 +52,7 @@ export function update() {
     return;
   }
   if (
+    COCKPIT_CAMERA_UPDATE_MS > 0 &&
     !cockpitUiUpdateDue(
       nowMs,
       this.lastCameraUpdateMs,

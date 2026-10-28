@@ -8,13 +8,13 @@ import { registerDataCredits } from '../data/dataCredits.js';
 import { configureCreditKeyboardAccess } from '../creditKeyboard.js';
 import { MapStackController } from '../mapStackController.js';
 import { loadPhotorealisticTileset } from '../mapStartup.js';
-import { initLogoGaze } from '../logoGaze.js';
 import {
   uninstallRenderGovernor,
   governorRequestRender,
 } from '../renderGovernor.js';
 import { describeError } from './errors.js';
 import { t } from '../i18n/index.js';
+import { createDayNightCustomShader } from '../maps/dayNightShader.js';
 
 /** Construct the application globe using the caller's local configuration. */
 export async function createApplicationScene({
@@ -33,7 +33,6 @@ export async function createApplicationScene({
     requests: requestServices,
     signal,
   });
-  defer(initLogoGaze());
   const previousKey = window.__GOOGLE_MAPS_API_KEY__;
   if (googleApiKey) {
     window.__GOOGLE_MAPS_API_KEY__ = googleApiKey;
@@ -78,6 +77,21 @@ export async function createApplicationScene({
   });
   signal.throwIfAborted();
   if (tileset) {
+    if (!tileset.customShader && Cesium.CustomShader) {
+      tileset.customShader = createDayNightCustomShader(Cesium);
+    }
+    tileset.cullRequestsWhileMoving = true;
+    tileset.cullRequestsWhileMovingMultiplier = 60.0;
+    tileset.foveatedScreenSpaceError = true;
+    tileset.foveatedConeSize = 0.3;
+    tileset.foveatedTimeDelay = 0.1;
+    tileset.skipLevelOfDetail = true;
+    tileset.baseScreenSpaceError = 1024;
+    tileset.skipScreenSpaceErrorFactor = 16;
+    tileset.skipLevels = 1;
+    tileset.immediatelyLoadDesiredLevelOfDetail = false;
+    tileset.loadSiblings = false;
+    tileset.progressiveResolutionHeightFactor = 0.5;
     viewer.scene.primitives.add(tileset);
     // NOTE: Cesium World Terrain intentionally disabled — conflicts with Google 3D Tiles at high zoom.
     // Google Photorealistic 3D Tiles provide their own terrain/elevation.

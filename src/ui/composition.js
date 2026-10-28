@@ -10,6 +10,8 @@ import {
   searchAndFlyTo,
 } from '../locations.js';
 import {
+  moveCamera,
+  getActiveCameraMotion,
   interruptCameraMotion,
   interruptGlobeRotation,
 } from '../cameraVerbs.js';
@@ -75,6 +77,8 @@ export class StyleManager extends ApplicationShell {
         flyToPresetLocation,
         flyToPOI,
         searchAndFlyTo,
+        moveCamera,
+        getActiveCameraMotion,
         interruptCameraMotion,
         interruptGlobeRotation,
         IntelHUD,

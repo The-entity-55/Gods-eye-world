@@ -304,6 +304,8 @@ export class LocationNavigation {
       GLOBE_VIEW,
       flyToGlobeView,
       interruptCameraMotion,
+      moveCamera,
+      getActiveCameraMotion,
       flightsLayer,
       militaryFlightsLayer,
       satellitesLayer,
@@ -317,6 +319,20 @@ export class LocationNavigation {
         action: 'zoom_to_globe',
         cancelled: true,
       });
+
+    const activeMotion = getActiveCameraMotion?.();
+    const isGlobeScale =
+      (this.viewer?.camera?.positionCartographic?.height || 0) > 10000000;
+    if (isGlobeScale && activeMotion?.kind === 'rotate_globe') {
+      interruptCameraMotion?.('toggle-stop');
+      return Promise.resolve({
+        ok: true,
+        action: 'zoom_to_globe',
+        cancelled: false,
+        spinning: false,
+      });
+    }
+
     if (this._globeResetPromise) return this._globeResetPromise;
     this._stampNavigation();
     interruptCameraMotion('reset-globe');
@@ -391,6 +407,14 @@ export class LocationNavigation {
       this._globeResetPromise = null;
       this._cancelGlobeReset = null;
       resolveReset(result);
+
+      if (!cancelled) {
+        moveCamera?.({
+          motion: 'rotate_globe',
+          direction: 'right',
+          speed: 'slow',
+        });
+      }
     };
     this._cancelGlobeReset = () => finish(true);
     timer = window.setTimeout(() => {

@@ -56,27 +56,30 @@
 }
 
 .panel-mini-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 1.4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
   color: var(--text-dim);
   text-transform: uppercase;
 }
 
 .panel-mini-value {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1.8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
   color: var(--accent);
   text-transform: uppercase;
   text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
 }
 
 .panel-title {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -213,6 +216,7 @@ html:not([lang='en']) .panel-collapse-btn {
 
 .style-btn.active .btn-label {
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 .btn-icon {
@@ -221,12 +225,18 @@ html:not([lang='en']) .panel-collapse-btn {
   color: var(--text-secondary);
   transition:
     color var(--transition-fast),
-    text-shadow var(--transition-fast);
+    text-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.style-btn:hover .btn-icon {
+  transform: scale(1.08);
+  color: var(--text-primary);
 }
 
 .btn-label {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
   letter-spacing: 0.3px;
@@ -235,18 +245,42 @@ html:not([lang='en']) .panel-collapse-btn {
 
 .btn-key {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: var(--text-dim);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  top: 4px;
+  right: 5px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+  opacity: 1 !important;
+  pointer-events: none;
+  box-sizing: border-box;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
-.style-btn:hover .btn-key,
+.style-btn:hover .btn-key {
+  background: rgba(0, 212, 255, 0.22);
+  border-color: rgba(0, 212, 255, 0.5);
+  color: #fff;
+}
+
 .style-btn.active .btn-key {
-  opacity: 1;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0a0f;
+  box-shadow: 0 0 6px var(--accent-glow);
 }
 
 /* ── Loading Screen ───────────────────────────── */
@@ -319,6 +353,108 @@ html:not([lang='en']) .panel-collapse-btn {
   50% {
     opacity: 1;
   }
+}
+
+.loader-location-prompt {
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: rgba(14, 18, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: prompt-fade-in 0.35s ease-out;
+}
+
+.loader-location-prompt[hidden] {
+  display: none !important;
+}
+
+@keyframes prompt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loader-prompt-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  background: rgba(0, 212, 255, 0.12);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 212, 255, 0.28);
+}
+
+.loader-prompt-title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+}
+
+.loader-prompt-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader-prompt-btn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.loader-prompt-primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #0a0a0f;
+  box-shadow: 0 0 14px rgba(0, 212, 255, 0.3);
+  font-weight: 700;
+}
+
+.loader-prompt-primary:hover:not(:disabled) {
+  background: #38e1ff;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.loader-prompt-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+
+.loader-prompt-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.loader-prompt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ── Post-Processing Toggles ─────────────────── */
@@ -431,10 +567,11 @@ html:not([lang='en']) .panel-collapse-btn {
 }
 
 #pp-toggles .pp-header-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 1.4px;
-  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
 }
 
 #pp-toggles > .pp-header-row .pp-collapse-btn {
@@ -490,9 +627,10 @@ html:not([lang='en']) .panel-collapse-btn {
 }
 
 .pp-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1.5px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
   color: var(--text-secondary);
   text-transform: uppercase;
 }
@@ -536,9 +674,10 @@ html:not([lang='en']) .panel-collapse-btn {
 }
 
 .pp-slider-mini-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 1px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
   color: var(--text-dim);
   text-transform: uppercase;
   white-space: nowrap;
@@ -613,10 +752,11 @@ html:not([lang='en']) .pp-slider-row > .pp-slider-mini-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: rgba(190, 221, 230, 0.62);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 1.35px;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
 }
 
 .map-stack-chip-row {
@@ -627,19 +767,20 @@ html:not([lang='en']) .pp-slider-row > .pp-slider-mini-label {
 
 .map-stack-chip {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 4px 7px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.6px;
+  padding: 5px 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
   cursor: pointer;
   /* Explicit property list, NOT `transition: all`: `all` animates
      `outline-width` off the `outline: none` base, and Chrome leaves that
@@ -1043,10 +1184,11 @@ body.ui-clean-view #scene-runtime.active {
 }
 
 .param-panel-title {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 2.5px;
-  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1094,9 +1236,10 @@ html:not([lang='en']) .param-slider-row {
 }
 
 .param-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
   color: var(--text-secondary);
   min-width: 72px;
   flex-shrink: 0;

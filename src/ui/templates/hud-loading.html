@@ -1,11 +1,23 @@
-  <!-- Intelligence HUD Overlay -->
+  <!-- HUD Overlay -->
   <div id="intel-hud"></div>
 
   <!-- Loading screen -->
   <div id="loading-screen">
     <div class="loader-content">
-      <span class="loader-logo brand-logo" data-logo-gaze data-logo-src="/logo.svg" aria-hidden="true"><img src="/logo.svg" alt="" /></span>
-      <h2 translate="no">GOD'S EYE <span class="title-accent">VIEW</span></h2>
+      <span class="loader-logo brand-logo" aria-hidden="true"><img src="/logo.svg" alt="" /></span>
+      <h2 translate="no">GOD'S EYE <span class="title-accent">WORLD</span></h2>
       <p class="loader-status" data-i18n>Initializing photorealistic world...</p>
+      <div id="loader-location-prompt" class="loader-location-prompt" hidden>
+        <div class="loader-prompt-badge" data-i18n>YOUR LOCATION</div>
+        <p class="loader-prompt-title" data-i18n>Detect your location to explore the area around you</p>
+        <div class="loader-prompt-actions">
+          <button type="button" id="loader-approve-location" class="loader-prompt-btn loader-prompt-primary" data-i18n>
+            📍 USE MY LOCATION
+          </button>
+          <button type="button" id="loader-skip-location" class="loader-prompt-btn loader-prompt-secondary" data-i18n>
+            🌐 EXPLORE THE GLOBE
+          </button>
+        </div>
+      </div>
     </div>
   </div>

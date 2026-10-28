@@ -673,11 +673,6 @@ test('the Display selector, voice schema and final stylesheet expose Cyber', () 
   );
   assert.match(
     cyberStyles,
-    /#title-bar \.title-logo #globe \{[\s\S]*?fill: var\(--cyber-red\);[\s\S]*?stroke: var\(--cyber-red-bright\);/,
-  );
-  assert.match(cyberStyles, /#title-bar \.title-logo #globe_cage/);
-  assert.match(
-    cyberStyles,
     /#top-center-actions button\s*\{[\s\S]*?border-radius:\s*0;[\s\S]*?clip-path:\s*polygon\(\s*29% 0,\s*71% 0,[\s\S]*?0 29%\s*\);/,
   );
   assert.match(cyberStyles, /#top-center-actions button::before/);

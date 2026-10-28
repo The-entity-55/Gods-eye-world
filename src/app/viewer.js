@@ -122,8 +122,13 @@ export function applicationViewerOptions(creditContainer) {
     // which would also stop CesiumWidget from creating the Sun and Moon.
     skyBox: new StarrySky(),
     creditContainer,
-    msaaSamples: 4,
-    contextOptions: { webgl: { preserveDrawingBuffer: true } },
+    msaaSamples: 2,
+    contextOptions: {
+      webgl: {
+        preserveDrawingBuffer: true,
+        powerPreference: 'high-performance',
+      },
+    },
   };
 }
 
@@ -136,7 +141,14 @@ export function createApplicationViewer({ container, creditContainer }) {
     applicationViewerOptions(creditContainer),
   );
   try {
-    viewer.targetFrameRate = 60;
+    // Rely on browser native requestAnimationFrame (targetFrameRate left undefined
+    // avoids Cesium's frame-skipping timer that drops 60 FPS down to 30 FPS).
+    const controller = viewer.scene.screenSpaceCameraController;
+    if (controller) {
+      controller.inertiaSpin = 0.85;
+      controller.inertiaTranslate = 0.85;
+      controller.inertiaZoom = 0.8;
+    }
     // A phone pinch spans fewer screen pixels than desktop zoom gestures.
     // Keep Cesium's distance-aware zoom and collision limits, with less travel
     // required on touch-first screens. Mouse/trackpad sensitivity stays native.
@@ -151,6 +163,17 @@ export function createApplicationViewer({ container, creditContainer }) {
     viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
     viewer.scene.skyAtmosphere.saturationShift = -0.12;
     viewer.scene.skyAtmosphere.brightnessShift = -0.08;
+    // Enable real-time dynamic day/night Sun lighting and atmosphere
+    viewer.scene.globe.enableLighting = true;
+    viewer.scene.globe.dynamicAtmosphereLighting = true;
+    viewer.scene.globe.dynamicAtmosphereLightingFromSun = true;
+    viewer.scene.globe.lightingFadeOutDistance = 100;
+    viewer.scene.globe.lightingFadeInDistance = 200;
+    viewer.scene.globe.nightAmbientLighting = 0.08;
+    viewer.scene.light = new Cesium.SunLight();
+    viewer.clock.shouldAnimate = true;
+    viewer.clock.currentTime = Cesium.JulianDate.now();
+    viewer.clock.multiplier = 1.0;
     return viewer;
   } catch (error) {
     viewer.destroy();

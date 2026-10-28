@@ -46,7 +46,7 @@ class Element {
   }
 }
 
-function shortcuts() {
+function shortcuts(overrides = {}) {
   const documentRef = new Element();
   const searchInput = new Element();
   const calls = [];
@@ -63,6 +63,7 @@ function shortcuts() {
   const actions = Object.fromEntries(
     names.map((name) => [name, (...args) => calls.push([name, ...args])]),
   );
+  Object.assign(actions, overrides);
   const controller = bindApplicationShortcuts({
     documentRef,
     searchInput,
@@ -99,6 +100,17 @@ test('letter shortcuts retain uppercase handling and existing actions', () => {
       'toggleCctv',
     ].map((name) => [name]),
   );
+});
+
+test('A routes to the Cockpit shortcut without changing the CCTV C binding', () => {
+  const cockpitCalls = [];
+  const f = shortcuts({
+    handleCockpitShortcut: (event) => cockpitCalls.push(event.key),
+  });
+  f.press('a');
+  f.press('c');
+  assert.deepEqual(cockpitCalls, ['a']);
+  assert.deepEqual(f.calls, [['toggleCctv']]);
 });
 
 for (const tag of ['INPUT', 'SELECT', 'TEXTAREA']) {

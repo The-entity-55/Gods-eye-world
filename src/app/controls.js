@@ -1,18 +1,20 @@
 import { catalogControlServices } from './catalog.js';
 import { StyleManager } from '../ui/composition.js';
-import { flyToAustin } from '../camera.js';
 import { initCockpitCloudEffects } from '../cockpitCloudEffects.js';
-import { t } from '../i18n/index.js';
+import { initStartupLocationPrompt } from './startupLocation.js';
+import { initLocationNewsFeed } from '../ui/locationNewsFeed.js';
 
 /** Construct the existing controls and camera presentation. */
 export function createApplicationControls({
   scene: { viewer, mapStackController, operations },
   loaderStatus,
+  loadingScreen,
   Controls = StyleManager,
   services,
   catalog,
   placeSearch,
   defer,
+  signal,
 }) {
   // Initialize the style manager (post-processing, HUD, locations, share links)
   const styleManager = new Controls(viewer, {
@@ -40,13 +42,30 @@ export function createApplicationControls({
   });
   defer(() => cockpitCloudEffects?.destroy());
 
-  // If no share link state, do default fly-to Austin
-  if (!styleManager.hasShareState) {
-    loaderStatus.textContent = t('Flying to Austin, TX...');
-    defer(flyToAustin(viewer));
-  } else {
-    loaderStatus.textContent = t('Restoring shared view...');
-  }
+  // Startup camera positioning: prompt operator for geolocation and auto-fly on approve
+  styleManager.startupLocationPromise = initStartupLocationPrompt({
+    viewer,
+    loaderStatus,
+    loadingScreen,
+    hasShareState: styleManager.hasShareState,
+    defer,
+    signal,
+  });
+  let locationNewsFeed;
+  void styleManager.startupLocationPromise.then((location) => {
+    if (signal?.aborted) return;
+    const resolvedLocation =
+      Number.isFinite(location?.latitude) && Number.isFinite(location?.longitude)
+        ? location
+        : { latitude: 30.2672, longitude: -97.7431 };
+    locationNewsFeed = initLocationNewsFeed({
+      viewer,
+      location: resolvedLocation,
+      fetchBrief: (...args) => operations.requests.regional.getBrief(...args),
+      signal,
+    });
+  });
+  defer(() => locationNewsFeed?.destroy());
 
   return { styleManager, weatherEffects, cockpitCloudEffects };
 }

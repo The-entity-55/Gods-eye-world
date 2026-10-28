@@ -51,6 +51,19 @@ export function shareTrackingRestoreNotice(result) {
       : t('Shared {subject} is unavailable', { subject });
 }
 
+/** Austin default coordinates from camera.js, generated automatically on unshared sessions. */
+export function isDefaultAustinState(state) {
+  if (!state || state.sharedAtMs) return false;
+  const lat = Number(state.lat);
+  const lon = Number(state.lon);
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    Math.abs(lat - 30.265) < 0.02 &&
+    Math.abs(lon - -97.744) < 0.02
+  );
+}
+
 /** Own initial share restoration, durable layer state and restoration notices. */
 export class ShareRestoration {
   constructor({
@@ -85,15 +98,19 @@ export class ShareRestoration {
     this.shareLinkManager = shareLinkManager;
     this._initialShareState = shareLinkManager.parseInitialHash();
   }
+
   start() {
     // Restore from URL hash if present
     const savedState = this._initialShareState;
-    this._initialShareRestorePromise = savedState
+    const isDefaultAustin = isDefaultAustinState(savedState);
+    const isExplicitShareState = savedState && !isDefaultAustin;
+
+    this._initialShareRestorePromise = isExplicitShareState
       ? new Promise((resolve) => {
           this._resolveInitialShareRestore = resolve;
         })
       : Promise.resolve({ status: 'not-requested', share: null, layers: [] });
-    if (savedState) {
+    if (isExplicitShareState) {
       this._hasShareState = true;
       // Reserve camera authority now; the delayed mesh-friendly flight may
       // run only if no newer user, voice, or tracking navigation has won.
@@ -145,6 +162,14 @@ export class ShareRestoration {
           }
         })();
       }, 1500);
+    } else if (isDefaultAustin) {
+      // Default Austin hash from previous session: apply non-camera state and release suppression
+      this._hasShareState = false;
+      this.shareLinkManager.completeInitialRestore();
+      void this.shareLinkManager.applyState(savedState, {
+        applyCamera: false,
+      });
+      this.syncShareState();
     } else {
       this.syncShareState();
     }

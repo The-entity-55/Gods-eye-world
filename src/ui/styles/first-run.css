@@ -73,10 +73,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  color: rgba(171, 210, 220, 0.6);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.1rem;
+  color: rgba(171, 210, 220, 0.75);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05rem;
   text-transform: uppercase;
 }
 
@@ -86,10 +87,10 @@
 
 #first-run-launcher h2 {
   margin-top: 0.6rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: clamp(1.25rem, 2.4vw, 1.75rem);
-  font-weight: 500;
-  letter-spacing: -0.045rem;
+  font-weight: 700;
+  letter-spacing: -0.02rem;
 }
 
 #first-run-description {
@@ -173,15 +174,16 @@
 }
 
 .first-run-choices strong {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
   font-weight: 600;
-  letter-spacing: 0.08rem;
+  letter-spacing: 0.02rem;
 }
 
 .first-run-choices small {
-  color: rgba(198, 220, 226, 0.55);
-  font-size: 0.66rem;
+  color: rgba(198, 220, 226, 0.72);
+  font-size: 0.74rem;
+  line-height: 1.35;
 }
 
 .first-run-arrow {

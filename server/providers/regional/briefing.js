@@ -2,13 +2,16 @@ import { makeRateLimiter, clientKey } from '../common/rate-limit.js';
 import { fetchRegionalPlace } from './place.js';
 import { fetchRegionalWeather } from './weather.js';
 import { fetchRegionalNews } from './news.js';
-import { validRegionalPoint } from './query.js';
+import { fetchRegionalNewsVideo } from './newsVideo.js';
+import { regionalNewsPreferences, validRegionalPoint } from './query.js';
 import { coalesceProxyRequest } from '../common/http.js';
 
 // ---------------------------------------------------------------------------
 // Regional cockpit briefing proxy
 // ---------------------------------------------------------------------------
-const REGIONAL_BRIEF_CACHE_MS = 5 * 60_000;
+// News is a live surface: cache only long enough to coalesce repeated UI
+// paints, rather than making a refresh appear stale.
+const REGIONAL_BRIEF_CACHE_MS = 60_000;
 
 const REGIONAL_BRIEF_STALE_MS = 60 * 60_000;
 
@@ -38,7 +41,7 @@ function regionalBriefProxy({ placeProvider = fetchRegionalPlace } = {}) {
     }
   }
 
-  async function refresh(point, key) {
+  async function refresh(point, key, preferences) {
     const [placeResult, weatherResult] = await Promise.allSettled([
       placeProvider(point),
       fetchRegionalWeather(point),
@@ -46,7 +49,13 @@ function regionalBriefProxy({ placeProvider = fetchRegionalPlace } = {}) {
     const place = placeResult.status === 'fulfilled' ? placeResult.value : null;
     const weather =
       weatherResult.status === 'fulfilled' ? weatherResult.value : null;
-    const news = await fetchRegionalNews(place);
+    // Video needs the resolved place, so it starts after geocoding but still
+    // runs alongside the news fetch.
+    const [news, videoResult] = await Promise.all([
+      fetchRegionalNews(place, preferences),
+      fetchRegionalNewsVideo(place).catch(() => null),
+    ]);
+    const newsVideo = videoResult?.videos?.length ? videoResult : null;
     if (!regionalBriefHasAnySource({ place, weather, news })) {
       throw new Error('All regional briefing sources unavailable');
     }
@@ -62,7 +71,9 @@ function regionalBriefProxy({ placeProvider = fetchRegionalPlace } = {}) {
       newsStatus: news.status,
       newsQuery: news.query,
       newsSource: news.source,
+      newsPreferences: preferences,
       articles: news.articles,
+      newsVideo,
     };
     _regionalBriefCache.set(key, { payload, cachedAt: Date.now() });
     trimRegionalBriefCache();
@@ -95,7 +106,9 @@ function regionalBriefProxy({ placeProvider = fetchRegionalPlace } = {}) {
         );
         return;
       }
-      const key = `${(Math.round(point.latitude * 10) / 10).toFixed(1)},${(Math.round(point.longitude * 10) / 10).toFixed(1)}`;
+      const preferences = regionalNewsPreferences(url.searchParams);
+      const preferenceKey = JSON.stringify(preferences);
+      const key = `${(Math.round(point.latitude * 10) / 10).toFixed(1)},${(Math.round(point.longitude * 10) / 10).toFixed(1)}|${preferenceKey}`;
       const now = Date.now();
       const cached = _regionalBriefCache.get(key);
       if (cached && now - cached.cachedAt <= REGIONAL_BRIEF_CACHE_MS) {
@@ -108,7 +121,7 @@ function regionalBriefProxy({ placeProvider = fetchRegionalPlace } = {}) {
         return;
       }
       const request = coalesceProxyRequest(_regionalBriefInFlight, key, () =>
-        refresh(point, key),
+        refresh(point, key, preferences),
       );
       try {
         const payload = await request.promise;

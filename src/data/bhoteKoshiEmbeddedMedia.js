@@ -1,6 +1,8 @@
 import * as Cesium from 'cesium';
 import { t, msg } from '../i18n/index.js';
 
+const YOUTUBE_CHANNEL_ID = /^UC[A-Za-z0-9_-]{22}$/;
+const YOUTUBE_VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const YOUTUBE_HOSTS = new Set([
   'youtube.com',
   'www.youtube.com',
@@ -402,7 +404,18 @@ export function embeddedMediaFrameUrl(
   { autoplay = false, startAtSec = 0, endAtSec = null } = {},
 ) {
   if (source?.provider === 'youtube') {
-    const url = new URL(`https://www.youtube-nocookie.com/embed/${source.id}`);
+    // A channel ID resolves whatever that channel is streaming right now;
+    // a fixed video ID goes private the moment the broadcast rotates.
+    const channelId = String(source.channelId || '');
+    const channelLive = YOUTUBE_CHANNEL_ID.test(channelId);
+    if (!channelLive && !YOUTUBE_VIDEO_ID.test(String(source.id || '')))
+      return null;
+    const url = new URL(
+      channelLive
+        ? 'https://www.youtube-nocookie.com/embed/live_stream'
+        : `https://www.youtube-nocookie.com/embed/${source.id}`,
+    );
+    if (channelLive) url.searchParams.set('channel', channelId);
     url.searchParams.set('playsinline', '1');
     url.searchParams.set('rel', '0');
     const startSeconds = Math.max(0, Math.floor(Number(startAtSec) || 0));

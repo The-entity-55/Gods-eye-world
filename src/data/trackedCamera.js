@@ -105,14 +105,18 @@ export function clampTrackedCameraPosition(
   previousPosition,
   minimumRangeM = MIN_TRACKED_RANGE_M,
 ) {
+  const previousMagnitudeSq = previousPosition
+    ? Cesium.Cartesian3.magnitudeSquared(previousPosition)
+    : 0;
   const crossedOrigin =
+    previousMagnitudeSq > Cesium.Math.EPSILON12 &&
     Cesium.Cartesian3.dot(camera.position, previousPosition) <= 0;
   const forwardDistance = -Cesium.Cartesian3.dot(
     camera.position,
     camera.direction,
   );
   const rangeSquared = Cesium.Cartesian3.magnitudeSquared(camera.position);
-  if (crossedOrigin) {
+  if (crossedOrigin && previousMagnitudeSq > 0) {
     Cesium.Cartesian3.normalize(previousPosition, camera.position);
     Cesium.Cartesian3.multiplyByScalar(
       camera.position,

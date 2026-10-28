@@ -21,7 +21,7 @@ const REGIONAL_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
  * redirect cannot steer the proxy at a destination this code never named.
  *
  * @param {string} url
- * @param {{headers?: object, timeoutMs?: number, maxBytes?: number, redirect?: 'follow'|'error'|'manual'}} [options]
+ * @param {{headers?: object, timeoutMs?: number, maxBytes?: number, redirect?: 'follow'|'error'|'manual', method?: string, body?: string}} [options]
  */
 async function fetchRegional(url, read, options = {}) {
   const {
@@ -29,6 +29,8 @@ async function fetchRegional(url, read, options = {}) {
     timeoutMs = 9000,
     maxBytes = REGIONAL_MAX_RESPONSE_BYTES,
     redirect = 'follow',
+    method = 'GET',
+    body,
   } = options;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -37,6 +39,8 @@ async function fetchRegional(url, read, options = {}) {
       signal: controller.signal,
       headers,
       redirect,
+      method,
+      body,
     });
     if (!response.ok) throw new Error(`Upstream returned ${response.status}`);
     return await read(response, maxBytes, controller.signal);

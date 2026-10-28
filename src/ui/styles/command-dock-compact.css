@@ -206,16 +206,26 @@
 }
 
 #command-dock .btn-icon {
-  font-size: 0.78rem;
+  font-size: 0.95rem;
 }
 
 #command-dock .btn-label {
-  font-size: 0.43rem;
+  font-size: 0.68rem;
   letter-spacing: 0.02rem;
+  font-weight: 500;
+  text-transform: none;
 }
 
 #command-dock .btn-key {
-  display: none;
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  display: inline-flex !important;
+  opacity: 1 !important;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 1rem;
+  height: 1rem;
 }
 
 #command-dock > #gev-voice-control {

@@ -63,6 +63,9 @@ export function createVesselLayer({ source, services, options = {} } = {}) {
     buildVesselCard: parts.cards.buildVesselCard,
     buildSelectedVesselCard: parts.cards.buildSelectedVesselCard,
     cardScreenSeparated: parts.cards.cardScreenSeparated,
+    prepareSelectedVesselForCockpit:
+      parts.selection.prepareSelectedVesselForCockpit,
+    releaseSelectedVesselCockpit: parts.selection.releaseSelectedVesselCockpit,
   });
   Object.defineProperty(layer, 'testing', { value: parts.testing });
   return layer;

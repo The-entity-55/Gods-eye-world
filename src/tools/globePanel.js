@@ -1,6 +1,6 @@
 /**
- * The God's Eye View panel: an MCP Apps view (`io.modelcontextprotocol/ui`) that shows
- * God's Eye View inside a conversation. The panel is a small page that runs
+ * The God's Eye World panel: an MCP Apps view (`io.modelcontextprotocol/ui`) that shows
+ * God's Eye World inside a conversation. The panel is a small page that runs
  * the app's panel build inside itself in embed mode, loading it through the
  * MCP server, and sends it each view the show_in_gods_eye_view tool returns;
  * see docs/TOOLS.md.
@@ -73,7 +73,7 @@ const PANEL_APP_BASE_URL = 'https://app.gods-eye-view.invalid/';
 export const PANEL_REQUEST_TOOL = 'panel_request';
 
 /**
- * The panel page: its status line, the Open in God's Eye View button, and
+ * The panel page: its status line, the Open in God's Eye World button, and
  * the panel's script, `runtime`, which loads the app through the MCP server
  * and shows each view a tool returns.
  */
@@ -96,7 +96,7 @@ function panelHtml(runtime, panelKey) {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>God's Eye View</title>
+<title>God's Eye World</title>
 <style>
   html, body { margin: 0; height: 100%; min-height: ${PANEL_HEIGHT_PX}px; background: #05070a;
     color: #b8c4cc; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
@@ -112,7 +112,7 @@ function panelHtml(runtime, panelKey) {
 <div id="status">Waiting for a view…</div>
 <div id="actions">
 <button id="expand" type="button" hidden>Expand</button>
-<button id="open" type="button" hidden>Open in God's Eye View</button>
+<button id="open" type="button" hidden>Open in God's Eye World</button>
 </div>
 <script>${script}</script>
 </body>
@@ -137,8 +137,8 @@ export function createGlobePanelResource({ runtime, panelKey }) {
   return Object.freeze({
     uri: GLOBE_PANEL_URI,
     name: 'globe',
-    title: "God's Eye View globe",
-    description: "Live God's Eye View, showing the view a tool returns.",
+    title: "God's Eye World globe",
+    description: "Live God's Eye World, showing the view a tool returns.",
     mimeType: MCP_APP_MIME_TYPE,
     text: panelHtml(runtime, panelKey),
     _meta: {

@@ -1,6 +1,6 @@
 import { greatCircleMeters } from '../geoDistance.js';
 
-const MAX_ARTICLES = 5;
+const MAX_ARTICLES = 8;
 
 function cleanText(value, maxLength = 180) {
   return String(value || '')
@@ -91,6 +91,7 @@ export function normalizeRegionalArticles(payload, limit = MAX_ARTICLES) {
         80,
       ),
       publishedAt,
+      image: safeHttpUrl(row?.socialimage || row?.image),
       sourceCountry: cleanText(row?.sourcecountry, 60) || null,
     });
     if (articles.length >= Math.max(1, Math.min(MAX_ARTICLES, limit))) break;

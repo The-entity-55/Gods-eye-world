@@ -730,7 +730,6 @@
   "Audio connects directly to the broadcaster after you press play. Your IP is visible to that broadcaster.": "После нажатия «Пуск» звук идёт напрямую от вещателя, и ему виден ваш IP-адрес.",
   "Internet radio and local SDR": "Интернет-радио и локальный SDR",
   "Filter stations by station tag": "Фильтровать станции по тегу",
-  "CONTEXT": "КОНТЕКСТ",
   "SPACE MISSIONS": "КОСМИЧЕСКИЕ МИССИИ",
   "COCKPIT": "КАБИНА",
   "SELECT CONTACTS TO LOAD OBSERVED / MAPPED PROXIMITY": "ВЫБЕРИТЕ КОНТАКТЫ, ЧТОБЫ ЗАГРУЗИТЬ НАБЛЮДАЕМОЕ / КАРТОГРАФИРОВАННОЕ ОКРУЖЕНИЕ",
@@ -3015,5 +3014,16 @@
   "Layers": "Слои",
   "Search": "Поиск",
   "More": "Ещё",
-  "Panels": "Панели"
+  "Panels": "Панели",
+  "ACQUIRING FIX...": "ОПРЕДЕЛЕНИЕ КООРДИНАТ...",
+  "Requesting satellite geolocation fix...": "Запрос спутниковой геолокации...",
+  "Target acquired: {lat}°, {lon}° — Descending...": "Цель захвачена: {lat}°, {lon}° — Снижение...",
+  "Coordinates unavailable — opening default view...": "Координаты недоступны — открытие стандартного вида...",
+  "Location access denied — opening globe view...": "Доступ к геопозиции отклонен — открытие вида на глобус...",
+  "Opening globe view...": "Открытие вида на глобус...",
+  "Awaiting operator target authorization...": "Ожидание авторизации цели оператором...",
+  "ORBITAL TARGETING": "ОРБИТАЛЬНОЕ НАВЕДЕНИЕ",
+  "Detect your location to deploy surveillance above you": "Определите местоположение для развертывания наблюдения над вами",
+  "📍 APPROVE & LOCATE": "📍 РАЗРЕШИТЬ И НАЙТИ",
+  "🌐 EXPLORE GLOBE": "🌐 ОБЗОР ГЛОБУСА"
 }

@@ -124,6 +124,17 @@ export function createApplicationTools({
     },
   );
 
+  // Camera motion (user drag, rotate globe, zoom, inertia) needs continuous 60 FPS
+  // rendering so navigating the world feels fluid and instantaneous.
+  const removeCameraMoveStart = viewer.camera?.moveStart?.addEventListener(
+    () => {
+      holdContinuousRender('camera-move');
+    },
+  );
+  const removeCameraMoveEnd = viewer.camera?.moveEnd?.addEventListener(() => {
+    releaseContinuousRender('camera-move');
+  });
+
   // Hidden-state suspension (perf wave 2): when the window/tab is hidden,
   // stop the default render loop outright — a hidden canvas repaints for
   // nobody, and browser rAF throttling still lets throttled frames burn
@@ -147,6 +158,9 @@ export function createApplicationTools({
   defer(() => {
     removeTrackingListener();
     releaseContinuousRender('tracked-entity');
+    removeCameraMoveStart?.();
+    removeCameraMoveEnd?.();
+    releaseContinuousRender('camera-move');
   });
   // Apply the CURRENT state too — bootstrap can complete while the tab is
   // already hidden, and waiting for the next transition would leave the

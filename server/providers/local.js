@@ -111,5 +111,8 @@ export { readMilitaryInstallationDisk } from './military-installations/cache.js'
 export { writeMilitaryInstallationDisk } from './military-installations/cache.js';
 export { validMilitaryInstallationBox } from './military-installations/query.js';
 export { militaryInstallationFailureReason } from './military-installations/query.js';
-export { validRegionalPoint } from './regional/query.js';
+export {
+  validRegionalPoint,
+  regionalNewsPreferences,
+} from './regional/query.js';
 export { regionalBriefHasAnySource } from './regional/briefing.js';

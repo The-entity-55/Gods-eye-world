@@ -8,6 +8,7 @@ import createViteConfig, {
   LL2_CACHE_TTL_MS,
   readResponseJsonCapped,
   regionalBriefHasAnySource,
+  regionalNewsPreferences,
   validMilitaryInstallationBox,
   validRegionalPoint,
 } from '../../vite.config.js';
@@ -31,6 +32,28 @@ test('regional proxy rejects absent and blank coordinates instead of coercing th
   assert.deepEqual(
     validRegionalPoint(new URLSearchParams('latitude=0&longitude=0')),
     { latitude: 0, longitude: 0 },
+  );
+});
+
+test('regional-news preferences accept bounded search terms, not arbitrary provider input', () => {
+  assert.deepEqual(
+    regionalNewsPreferences(
+      new URLSearchParams(
+        'topics=weather,climate&countries=in,us&domains=youtube.com,facebook.com&language=hi',
+      ),
+    ),
+    {
+      topics: ['weather', 'climate'],
+      countries: ['IN', 'US'],
+      domains: ['youtube.com', 'facebook.com'],
+      language: 'hi',
+    },
+  );
+  assert.deepEqual(
+    regionalNewsPreferences(
+      new URLSearchParams('topics=ok,https://bad.example&countries=india&domains=bad/path&language=english'),
+    ),
+    { topics: ['ok'], countries: [], domains: [], language: 'en' },
   );
 });
 

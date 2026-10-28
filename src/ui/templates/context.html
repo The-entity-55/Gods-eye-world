@@ -28,9 +28,10 @@
       <div class="panel-glow"></div>
       <div class="global-context-panel-inner" data-rail-scroller>
         <div class="panel-header">
-          <span class="panel-title" data-i18n>CONTEXT</span>
+          <span class="panel-title" data-i18n>RADIO</span>
+          <span id="radio-layer-state" class="radio-layer-state" data-i18n>OFF</span>
           <span class="panel-divider"></span>
-          <div id="context-radio-dock" class="context-radio-dock">
+          <div id="context-radio-dock" class="context-radio-dock" hidden style="display: none;">
             <button id="context-radio-toggle-btn" class="context-radio-toggle" type="button" aria-expanded="false" aria-controls="context-radio-mini" aria-label="Open compact Radio controls" title="Open compact Radio controls" data-i18n-aria-label data-i18n-title>
               <span class="material-symbols-outlined" aria-hidden="true">radio</span>
             </button>
@@ -63,7 +64,7 @@
           <button class="panel-collapse-btn" data-collapse-target="global-context-panel" title="Expand panel" data-i18n-title>▶</button>
         </div>
         <div class="cyber-panel-body" data-rail-scroller>
-        <div class="global-context-modes" role="tablist" aria-label="Context mode" data-i18n-aria-label>
+        <div class="global-context-modes" role="tablist" aria-label="Context mode" data-i18n-aria-label hidden style="display: none;">
           <button id="global-context-flights-btn" class="context-mode-button" type="button" role="tab" tabindex="0" aria-selected="false" aria-controls="context-flights-view" aria-label="CONTACTS" title="Cycles the nearest contacts of whatever type you select — planes, vessels, installations. Satellites track independently." data-i18n-aria-label data-i18n-title>
             <span class="material-symbols-outlined" aria-hidden="true">radar</span>
             <span data-i18n>CONTACTS</span>
@@ -73,11 +74,11 @@
             <span data-i18n>SPACE MISSIONS</span>
           </button>
         </div>
-        <div id="context-mode-standby" class="context-mode-standby">
+        <div id="context-mode-standby" class="context-mode-standby" hidden style="display: none;">
           <strong data-i18n>SELECT CONTEXT</strong>
           <span data-i18n-runtime>CONTACTS — nearest planes · vessels · sites<br>SPACE MISSIONS — launches &amp; orbital assets</span>
         </div>
-        <section id="context-flights-view" class="context-mode-view" role="tabpanel" aria-labelledby="global-context-flights-btn" hidden>
+        <section id="context-flights-view" class="context-mode-view" role="tabpanel" aria-labelledby="global-context-flights-btn" hidden style="display: none;">
           <div class="global-context-actions" aria-label="Contact Context actions" data-i18n-aria-label>
             <button id="cockpit-entry" type="button" hidden>
               <span class="material-symbols-outlined" aria-hidden="true">flight</span>
@@ -88,33 +89,32 @@
           </div>
           <aside id="military-awareness-panel">
             <div class="military-awareness-standby">
-              <strong data-i18n>CONTACTS CONTEXT OFF</strong>
-              <span data-i18n>SELECT CONTACTS TO LOAD OBSERVED / MAPPED PROXIMITY</span>
+              <strong data-i18n>LIVE TRACKING OFF</strong>
+              <span data-i18n>SELECT TRACKING TO VIEW NEARBY ACTIVITY</span>
             </div>
           </aside>
         </section>
-        <section id="context-missions-view" class="context-mode-view" role="tabpanel" aria-labelledby="global-context-missions-btn" hidden>
+        <section id="context-missions-view" class="context-mode-view" role="tabpanel" aria-labelledby="global-context-missions-btn" hidden style="display: none;">
           <div id="space-mission-panel-host">
             <div id="space-mission-roster" class="space-mission-roster" aria-label="Available Space Missions" data-i18n-aria-label>
               <div class="space-mission-roster-header">
                 <div>
-                  <strong data-i18n>AVAILABLE MISSIONS</strong>
-                  <span data-i18n>SELECT A MISSION TO INSPECT</span>
+                  <strong data-i18n>AVAILABLE LAUNCHES</strong>
+                  <span data-i18n>SELECT A LAUNCH TO INSPECT</span>
                 </div>
                 <output data-mission-roster-count>—</output>
               </div>
               <div class="space-mission-roster-list" data-mission-roster-list>
-                <div class="space-mission-roster-empty" data-i18n>LOADING 30-DAY MISSION INDEX</div>
+                <div class="space-mission-roster-empty" data-i18n>LOADING 30-DAY LAUNCH INDEX</div>
               </div>
               <p class="space-mission-roster-focus-continuation" tabindex="-1" data-mission-roster-focus-continuation data-i18n>TAB PREVIEWS · ENTER / SPACE SELECTS</p>
             </div>
           </div>
         </section>
-        <section id="radio-panel" class="panel-collapsible collapsed" data-panel-id="radio-panel" aria-label="Internet radio and local SDR" data-i18n-aria-label>
+        <section id="radio-panel" class="panel-collapsible" data-panel-id="radio-panel" aria-label="Internet radio and local SDR" data-i18n-aria-label>
           <div class="radio-panel-inner">
-            <div class="panel-header">
+            <div class="panel-header" hidden style="display: none;">
               <span class="panel-title" data-i18n>RADIO</span>
-              <span id="radio-layer-state" class="radio-layer-state" data-i18n>OFF</span>
               <span class="panel-divider"></span>
               <button class="panel-collapse-btn" data-collapse-target="radio-panel" title="Expand Radio" aria-label="Expand Radio section" data-i18n-title data-i18n-aria-label>+</button>
             </div>
@@ -163,7 +163,7 @@
               <a href="https://www.radio-browser.info/" target="_blank" rel="noopener noreferrer" data-i18n>DIRECTORY: RADIO BROWSER</a>
             </div>
             <p class="radio-privacy" data-i18n>Audio connects directly to the broadcaster after you press play. Your IP is visible to that broadcaster.</p>
-            <div id="sdr-radio-card" class="sdr-radio-card" role="group" aria-label="Local RTL-SDR receiver" data-i18n-aria-label>
+            <div id="sdr-radio-card" class="sdr-radio-card" role="group" aria-label="Local RTL-SDR receiver" data-i18n-aria-label hidden style="display: none;">
               <div class="sdr-radio-heading">
                 <strong data-i18n>LOCAL RTL-SDR</strong>
                 <span id="sdr-connection-state" data-i18n-runtime>NO USB</span>

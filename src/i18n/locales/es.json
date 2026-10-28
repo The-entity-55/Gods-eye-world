@@ -180,7 +180,6 @@
   "NO AVAILABLE EXAMPLE": "SIN EJEMPLO DISPONIBLE",
   "AVAILABLE INPUTS ONLY · NOT AN ALL-CLEAR": "SOLO DATOS DISPONIBLES · NO IMPLICA TODO DESPEJADO",
   "Enable cockpit weather effects": "Activar los efectos climáticos de la cabina",
-  "CONTEXT": "CONTEXTO",
   "Expand panel": "Expandir panel",
   "Context mode": "Modo de contexto",
   "CONTACTS": "CONTACTOS",
@@ -2948,5 +2947,16 @@
   "Layers": "Capas",
   "Search": "Buscar",
   "More": "Más",
-  "Panels": "Paneles"
+  "Panels": "Paneles",
+  "ACQUIRING FIX...": "OBTENIENDO COORDENADAS...",
+  "Requesting satellite geolocation fix...": "Solicitando posición satelital por geolocalización...",
+  "Target acquired: {lat}°, {lon}° — Descending...": "Objetivo adquirido: {lat}°, {lon}° — Descendiendo...",
+  "Coordinates unavailable — opening default view...": "Coordenadas no disponibles — abriendo vista predeterminada...",
+  "Location access denied — opening globe view...": "Acceso a ubicación denegado — abriendo vista global...",
+  "Opening globe view...": "Abriendo vista global...",
+  "Awaiting operator target authorization...": "Esperando autorización de objetivo del operador...",
+  "ORBITAL TARGETING": "OBJETIVO ORBITAL",
+  "Detect your location to deploy surveillance above you": "Detecta tu ubicación para desplegar vigilancia sobre ti",
+  "📍 APPROVE & LOCATE": "📍 APROBAR Y LOCALIZAR",
+  "🌐 EXPLORE GLOBE": "🌐 EXPLORAR GLOBO"
 }

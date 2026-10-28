@@ -34,6 +34,7 @@ export class CockpitCoordinator {
     const {
       flightsLayer,
       militaryFlightsLayer,
+      aisLiveVesselsLayer,
       isTr3b,
       toggleTr3b,
       militaryAwarenessLayer,
@@ -54,6 +55,7 @@ export class CockpitCoordinator {
       services: {
         flightsLayer,
         militaryFlightsLayer,
+        aisLiveVesselsLayer,
         isTr3b,
         toggleTr3b,
         militaryAwarenessLayer,
@@ -90,11 +92,20 @@ export class CockpitCoordinator {
         );
         const trackedId = idParts.join(':');
         if (!trackedId) return false;
+        if (layerId === 'ais-live-vessels')
+          return (
+            aisLiveVesselsLayer?.releaseSelectedVesselCockpit?.(entity) === true
+          );
         if (layerId === 'flights')
           return flightsLayer.refocusTrackedById?.(trackedId) === true;
         if (layerId === 'military')
           return militaryFlightsLayer.refocusTrackedById?.(trackedId) === true;
         return false;
+      },
+      prepareShortcutTarget: () => {
+        const entity = aisLiveVesselsLayer?.prepareSelectedVesselForCockpit?.();
+        if (entity) viewer.trackedEntity = entity;
+        return entity || null;
       },
     });
   }
@@ -187,6 +198,31 @@ export class CockpitCoordinator {
         : false,
       activeMapView: !this.cockpitView?.active && entryAllowed,
     };
+  }
+
+  /** Enter/exit Cockpit from the A shortcut for the currently selected contact. */
+  toggleShortcutCockpit() {
+    const { flightsLayer, militaryFlightsLayer } = this.services;
+    if (!this.cockpitView) return false;
+    if (this.cockpitView.active) return this.cockpitView.exit();
+
+    // A highlighted flight is normally already tracked, but reacquire its
+    // layer-owned entity if a camera handoff cleared Cesium's reference between
+    // the selection click and the key press.
+    if (!this.viewer?.trackedEntity?.position) {
+      const target = this.getAircraftTrackingTarget();
+      const layer =
+        target?.layerId === 'military'
+          ? militaryFlightsLayer
+          : target?.layerId === 'flights'
+            ? flightsLayer
+            : null;
+      layer?.trackById?.(target?.id, { origin: 'user' });
+    }
+    if (!this.viewer?.trackedEntity?.position) {
+      this.cockpitView.prepareShortcutTarget?.();
+    }
+    return this.cockpitView.enter({ bypassEntryGate: true });
   }
 
   _retargetCockpitEntryLayer({

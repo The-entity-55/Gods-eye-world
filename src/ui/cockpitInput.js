@@ -54,18 +54,21 @@ export function onKeyDown(event) {
   if (event.target?.closest?.('input, textarea, select, [contenteditable]'))
     return;
   const key = event.key?.toLowerCase();
-  if (key === 'c' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+  if (key === 'a' && !event.metaKey && !event.ctrlKey && !event.altKey) {
     if (!this.active) {
-      const cockpitAttempt = !!(
+      let cockpitAttempt = !!(
         this.readAircraftInfo() && this.viewer.trackedEntity?.position
       );
-      if (!cockpitAttempt) return;
+      if (!cockpitAttempt) {
+        cockpitAttempt = Boolean(this.prepareShortcutTarget?.());
+      }
+      if (!cockpitAttempt) return false;
     }
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (!this.active && !this.isEntryAllowed()) return;
     if (this.active) this.exit();
-    else this.enter();
-    return;
+    else this.enter({ bypassEntryGate: true });
+    return true;
   }
+  return false;
 }

@@ -29,14 +29,23 @@ export function bindApplicationShortcuts({
       event.target === searchInput;
     if (isFormControl && event.key !== 'Escape') return;
 
-    if (STYLE_KEYS[event.key]) actions.setStyle(STYLE_KEYS[event.key]);
+    const styleFromKey = STYLE_KEYS[event.key];
+    const styleFromCode = event.code?.startsWith('Digit')
+      ? STYLE_KEYS[event.code.slice(5)]
+      : event.code?.startsWith('Numpad')
+        ? STYLE_KEYS[event.code.slice(6)]
+        : null;
+    const targetStyle = styleFromKey || styleFromCode;
+
+    if (targetStyle) actions.setStyle(targetStyle);
     if (event.key === 'Escape') actions.dismissSearch();
-    const key = event.key.toLowerCase();
+    const key = event.key?.toLowerCase?.() ?? '';
     if (key === 'h') actions.toggleHud();
     if (key === 'o') actions.toggleOrbit();
     if (key === 'v') actions.toggleCleanView();
     if (key === 'f') actions.toggleLayers();
     if (key === 'd') actions.cycleDetection();
+    if (key === 'a') actions.handleCockpitShortcut?.(event);
     if (key === 'c') actions.toggleCctv();
   };
   documentRef.addEventListener('keydown', onKeyDown);

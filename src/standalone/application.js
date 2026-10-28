@@ -77,6 +77,7 @@ export function createStandaloneApplication({
     createControls: (context) =>
       createStandaloneControls({
         ...context,
+        loadingScreen,
         loaderStatus,
         placeSearch,
         catalog,

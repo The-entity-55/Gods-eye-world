@@ -19,8 +19,8 @@
   border-radius: 0;
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-secondary);
-  font: 9px/1.25 var(--font-mono);
-  letter-spacing: 0.6px;
+  font: 600 11px/1.2 var(--font-sans);
+  letter-spacing: 0.3px;
   text-transform: uppercase;
   overflow-wrap: normal;
   cursor: pointer;

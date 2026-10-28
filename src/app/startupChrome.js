@@ -23,7 +23,11 @@ export function startApplicationChrome({
     clearTimeout(revealTimer);
     loadingScreen.removeEventListener('transitionend', revealFirstRun);
   };
-  void Promise.all([styleManager.initialRestorePromise, minimumDelay])
+  void Promise.all([
+    styleManager.initialRestorePromise,
+    styleManager.startupLocationPromise || Promise.resolve(),
+    minimumDelay,
+  ])
     .catch(() => {
       /* Restoration reports its own outcome through the controls. */
     })

@@ -88,6 +88,7 @@ export class DisplayBindings {
           cycleDetectionMode();
           this._syncShareState();
         },
+        handleCockpitShortcut: () => this.toggleShortcutCockpit(),
         toggleCctv: () => this._toggleCctvEnabled(),
       },
     });

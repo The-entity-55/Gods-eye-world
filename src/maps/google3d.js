@@ -1,3 +1,5 @@
+import { createDayNightCustomShader } from './dayNightShader.js';
+
 const clean = (value) => String(value || '').trim();
 
 /**
@@ -53,6 +55,23 @@ export async function loadPhotorealisticTileset(
   for (const attempt of attempts) {
     try {
       const tileset = await attempt.create();
+      if (tileset) {
+        if (!tileset.customShader && Cesium.CustomShader) {
+          tileset.customShader = createDayNightCustomShader(Cesium);
+        }
+        tileset.cullRequestsWhileMoving = true;
+        tileset.cullRequestsWhileMovingMultiplier = 60.0;
+        tileset.foveatedScreenSpaceError = true;
+        tileset.foveatedConeSize = 0.3;
+        tileset.foveatedTimeDelay = 0.1;
+        tileset.skipLevelOfDetail = true;
+        tileset.baseScreenSpaceError = 1024;
+        tileset.skipScreenSpaceErrorFactor = 16;
+        tileset.skipLevels = 1;
+        tileset.immediatelyLoadDesiredLevelOfDetail = false;
+        tileset.loadSiblings = false;
+        tileset.progressiveResolutionHeightFactor = 0.5;
+      }
       return { tileset, route: attempt.route, errors };
     } catch (error) {
       errors.push(error instanceof Error ? error : new Error(String(error)));

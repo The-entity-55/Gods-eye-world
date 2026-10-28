@@ -9,6 +9,7 @@ export function readAircraftInfo() {
   // In cockpit mode the controller takes the entity off `viewer.trackedEntity`
   // (see update()), so the cockpit's own handle is the tracked identity there.
   const trackedEntity = this.viewer?.trackedEntity || this.trackedEntity;
+  if (trackedEntity?.gevVesselInfo) return trackedEntity.gevVesselInfo;
   return resolveTrackedAircraftInfo({
     civilian: this.services.flightsLayer.getTrackedInfo?.() || null,
     military: this.services.militaryFlightsLayer.getTrackedInfo?.() || null,
@@ -127,10 +128,10 @@ export function _adoptTrackedEntity(nowMs, suppliedInfo = null) {
   return true;
 }
 
-export function enter() {
+export function enter({ bypassEntryGate = false } = {}) {
   if (this.destroyed) return false;
   if (this.active) return false;
-  if (!this.isEntryAllowed()) return false;
+  if (!bypassEntryGate && !this.isEntryAllowed()) return false;
   const info = this.readAircraftInfo();
   const entity = this.viewer.trackedEntity;
   if (!info || !entity?.position) return false;
