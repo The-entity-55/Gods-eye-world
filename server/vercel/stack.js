@@ -1,3 +1,8 @@
+// The AIS plugin loads `ws` with a dynamic createRequire so a missing optional
+// dependency degrades the vessel feed instead of breaking the build. Vercel's
+// file tracer cannot see that, so the package would be absent from the
+// function and `/api/vessels` would report its transport unavailable.
+import 'ws';
 import { localProviderPlugins } from '../providers/local.js';
 import { standaloneVoiceTools } from '../standalone/voiceTools.js';
 import { createMiddlewareRouter } from './router.js';
