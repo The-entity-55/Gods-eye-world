@@ -1,5 +1,6 @@
 import { readRequestBody } from '../common/request.js';
 import { admitSameSiteRequest } from '../../../src/localRequestGate.mjs';
+import { platformProxyTrusted, sameSiteProtocol } from '../common/same-site.js';
 import {
   isAllowedHost,
   resolveAllowedHosts,
@@ -21,17 +22,21 @@ export function isGeminiRequestOriginAllowed(
     /[\s/?#@\\]/.test(host)
   )
     return false;
-  const protocol = req.socket?.encrypted ? 'https:' : 'http:';
+  const trusted = platformProxyTrusted();
   if (
     !admitSameSiteRequest({
       hostHeader: host,
-      protocol,
+      protocol: sameSiteProtocol(req),
       origin,
       secFetchSite: req.headers?.['sec-fetch-site'],
-      proxyHeaders: req.headers || {},
+      proxyHeaders: trusted ? {} : req.headers || {},
     }).ok
   )
     return false;
+  // On a serverless platform the request Host is assigned by the platform and
+  // the exact-Origin check above already binds it; there is no local hostname
+  // to allowlist. Locally keep the configured Host policy.
+  if (trusted) return true;
   // The shared gate compares a present Origin exactly with this authority;
   // this route also requires the Origin and an allowed Host.
   const boundHost = String(configuredHost || '')

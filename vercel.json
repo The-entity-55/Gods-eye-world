@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "PUPPETEER_SKIP_DOWNLOAD=1 npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 60,
+      "includeFiles": "config/**"
+    }
+  }
+}

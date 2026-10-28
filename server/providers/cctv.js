@@ -15,7 +15,10 @@ import {
   CCTV_MAX_SOURCES_CEILING,
 } from './cctv/constants.js';
 import { sanitizeCctvRangeHeader } from './cctv/range.js';
-import { admitSameSiteKeyless } from './common/same-site.js';
+import {
+  admitSameSiteKeyless,
+  platformProxyTrusted,
+} from './common/same-site.js';
 import { PROXY_SIGNALS } from '../../src/localRequestGate.mjs';
 import { createHlsPuller } from './cctv/stream.js';
 import { googleServerApiKey } from './places/google-key.js';
@@ -548,10 +551,12 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
         // The Street View fallback spends the Google key, so a forwarded
         // request (whose client this server cannot see) gets the placeholder,
         // as if no key were configured. Any forwarding header counts, even an
-        // empty one.
-        const forwarded = PROXY_SIGNALS.some(
-          (name) => req.headers?.[name] !== undefined,
-        );
+        // empty one. A serverless platform terminates the visitor connection
+        // itself and stamps every request, so its forwarding headers are the
+        // platform's, not an untrusted intermediary's.
+        const forwarded =
+          !platformProxyTrusted() &&
+          PROXY_SIGNALS.some((name) => req.headers?.[name] !== undefined);
         const sv = forwarded
           ? null
           : await streetViewFallback({

@@ -1,6 +1,24 @@
 import { admitSameSiteRequest } from '../../../src/localRequestGate.mjs';
 
 /**
+ * Vercel terminates TLS at its edge and stamps every request with
+ * X-Forwarded-* headers. The local "any proxy signal means 403" rule would
+ * otherwise refuse every cost-bearing route on a deployment. Trust the
+ * platform's forwarding metadata only when the runtime identifies itself as
+ * Vercel (or an operator explicitly opts another trusted proxy in); the
+ * Sec-Fetch-Site and exact-Origin checks below still run either way.
+ */
+export function platformProxyTrusted() {
+  return process.env.VERCEL === '1' || process.env.GEV_TRUST_PROXY === '1';
+}
+
+/** The scheme an Origin should be compared against for this request. */
+export function sameSiteProtocol(req) {
+  if (platformProxyTrusted()) return forwardedProtocol(req);
+  return req.socket?.encrypted ? 'https:' : 'http:';
+}
+
+/**
  * Cross-site request gate for cost-bearing and log endpoints. Feeds the
  * request to the pure, unit-tested `admitSameSiteRequest` and answers 403
  * itself when the request is refused. Returns true when it has already
@@ -13,12 +31,13 @@ import { admitSameSiteRequest } from '../../../src/localRequestGate.mjs';
  * @returns {boolean} True when a 403 was sent.
  */
 export function admitSameSite(req, res) {
+  const trusted = platformProxyTrusted();
   const verdict = admitSameSiteRequest({
     hostHeader: req.headers?.host,
-    protocol: req.socket?.encrypted ? 'https:' : 'http:',
+    protocol: sameSiteProtocol(req),
     origin: req.headers?.origin,
     secFetchSite: req.headers?.['sec-fetch-site'],
-    proxyHeaders: req.headers || {},
+    proxyHeaders: trusted ? {} : req.headers || {},
   });
   if (verdict.ok) return false;
   res.statusCode = verdict.status;
