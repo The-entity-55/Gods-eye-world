@@ -163,6 +163,30 @@ test('OpenSky state and track routes share tokens, retain cache and use regional
   assert.equal(JSON.parse(fallback.body).states[0][0], 'abc123');
 });
 
+test('a failed snapshot and a failed regional fallback answer 502 instead of rejecting', async (t) => {
+  environment(t, {
+    OPENSKY_CLIENT_ID: undefined,
+    OPENSKY_CLIENT_SECRET: undefined,
+    OPENSKY_AUTH_MODE: 'anon',
+  });
+  t.mock.method(console, 'warn', () => {});
+  t.mock.method(console, 'error', () => {});
+  t.mock.method(globalThis, 'fetch', async () => {
+    throw Error('connect timeout');
+  });
+  const fresh = await import(
+    `../../server/providers/aircraft/opensky.js?broken=${Math.random()}`
+  );
+  const response = await install(fresh.openSkyProxy())(
+    '/api/flights',
+    '?lat=22.7212&lon=76.7116',
+  );
+  assert.equal(response.statusCode, 502);
+  assert.equal(response.headers['x-opensky-auth-reason'], 'proxy_error');
+  assert.match(response.headers['x-opensky-error'], /connect timeout/);
+  assert.match(response.headers['x-opensky-upstream-ms'], /^\d+$/);
+});
+
 test('OpenSky global snapshot attempts are time-limited, retried once, then fall back', async (t) => {
   environment(t, {
     OPENSKY_CLIENT_ID: undefined,

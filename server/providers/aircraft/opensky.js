@@ -501,6 +501,10 @@ function openSkySourceIsStale(sourceEpochMs, now = Date.now()) {
 export function openSkyProxy() {
   const installMiddleware = (server) => {
     server.middlewares.use('/api/flights', async (req, res, next) => {
+      // Declared outside the try so the failure path can report them.
+      const requestedAt = Date.now();
+      /** Why the last upstream attempt ran in the mode it did. */
+      let authDetail = 'not_attempted';
       try {
         // This mount also matches its /track route, served by its own handler.
         if (new URL(req.url || '/', 'http://localhost').pathname !== '/')
@@ -509,10 +513,6 @@ export function openSkyProxy() {
         const requestedMode = normalizeOpenSkyAuthMode(
           process.env.OPENSKY_AUTH_MODE,
         );
-        const requestedAt = Date.now();
-        const credentialsPresent = openSkyClientCredentials() !== null;
-        /** Why the last upstream attempt ran in the mode it did. */
-        let authDetail = 'not_attempted';
         const now = Date.now();
         const inCooldown = now < _openskyCooldownUntil;
         // Fresh-enough cache (adaptive TTL) OR any cache during a 429
@@ -778,7 +778,8 @@ export function openSkyProxy() {
           'X-OpenSky-Error': errorDetail,
           'X-OpenSky-Upstream-Ms': String(upstreamMs),
           'X-OpenSky-Last-Auth-Reason': authDetail,
-          'X-OpenSky-Credentials': credentialsPresent ? 'present' : 'absent',
+          'X-OpenSky-Credentials':
+            openSkyClientCredentials() !== null ? 'present' : 'absent',
         };
         if (_openskyCacheBody) {
           const cachedMeta = _openskyCacheMeta || {
