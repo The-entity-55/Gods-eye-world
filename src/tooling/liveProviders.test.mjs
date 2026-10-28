@@ -187,6 +187,50 @@ test('a failed snapshot and a failed regional fallback answer 502 instead of rej
   assert.match(response.headers['x-opensky-upstream-ms'], /^\d+$/);
 });
 
+test('a transport failure suppresses OpenSky attempts until the window ends', async (t) => {
+  environment(t, {
+    OPENSKY_CLIENT_ID: undefined,
+    OPENSKY_CLIENT_SECRET: undefined,
+    OPENSKY_AUTH_MODE: 'anon',
+  });
+  t.mock.method(console, 'warn', () => {});
+  t.mock.method(console, 'error', () => {});
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    calls.push(String(url));
+    if (String(url).includes('/states/')) throw Error('connect timeout');
+    if (String(url).includes('/lat/'))
+      return Response.json({
+        now: 1,
+        ac: [{ hex: 'abc123', lat: 30, lon: -97, alt_baro: 10000 }],
+      });
+    throw Error(`Unexpected URL: ${url}`);
+  });
+  const fresh = await import(
+    `../../server/providers/aircraft/opensky.js?unreachable=${Math.random()}`
+  );
+  const request = install(fresh.openSkyProxy());
+
+  const first = await request('/api/flights', '?lat=30&lon=-97');
+  assert.equal(first.statusCode, 200);
+  assert.equal(
+    first.headers['x-opensky-auth-reason'],
+    'opensky_proxy_error_regional_fallback',
+  );
+  const attempts = () => calls.filter((url) => url.includes('/states/')).length;
+  assert.equal(attempts(), 2);
+
+  // The next poll answers from the regional feed without touching OpenSky.
+  const second = await request('/api/flights', '?lat=30.25&lon=-97.25');
+  assert.equal(second.statusCode, 200);
+  assert.equal(
+    second.headers['x-opensky-auth-reason'],
+    'opensky_unreachable_regional_fallback',
+  );
+  assert.equal(second.headers['x-opensky-error'], 'connect timeout');
+  assert.equal(attempts(), 2);
+});
+
 test('OpenSky global snapshot attempts are time-limited, retried once, then fall back', async (t) => {
   environment(t, {
     OPENSKY_CLIENT_ID: undefined,
@@ -720,7 +764,9 @@ test('global aircraft snapshots coalesce cold and expired callers and clear reje
       );
     });
     for (const phase of ['cold', 'expired', 'failed', 'recovered']) {
-      now += 13000;
+      // A transport failure also opens the unreachable window, so recovery
+      // waits it out before touching upstream again.
+      now += phase === 'recovered' && kind === 'opensky' ? 61_000 : 13_000;
       fail = phase === 'failed';
       blocked = new Promise((resolve) => {
         release = resolve;

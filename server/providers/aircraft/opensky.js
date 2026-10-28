@@ -121,6 +121,16 @@ let _openskyTtlMs = OPENSKY_CACHE_MS;
 /** @type {number} Epoch-ms before which no upstream fetch is attempted. */
 let _openskyCooldownUntil = 0;
 let _openskyCooldownStatus = 429;
+/**
+ * Epoch-ms before which a network-level failure (unreachable host, timeout)
+ * is assumed to persist. Without it every poll pays the full attempt and
+ * retry timeouts before the regional fallback can answer.
+ */
+let _openskyUnreachableUntil = 0;
+/** Diagnostics from the failure that opened the unreachable window. */
+let _openskyUnreachableDiagnostics = null;
+/** How long one failed attempt suppresses further upstream calls (ms). */
+const OPENSKY_UNREACHABLE_MS = 60_000;
 const _openskySnapshotInFlight = new Map();
 /**
  * Picks the cache TTL from the remaining daily credit budget.
@@ -515,12 +525,13 @@ export function openSkyProxy() {
         );
         const now = Date.now();
         const inCooldown = now < _openskyCooldownUntil;
+        const unreachable = now < _openskyUnreachableUntil;
         // Fresh-enough cache (adaptive TTL) OR any cache during a 429
         // cooldown: serve it without touching upstream. Stale-during-cooldown
         // is deliberate (credit governor): last-good planes beat a dead layer.
         if (
           _openskyCacheBody &&
-          (now - _openskyCacheTime < _openskyTtlMs || inCooldown)
+          (now - _openskyCacheTime < _openskyTtlMs || inCooldown || unreachable)
         ) {
           if (
             openSkySourceIsStale(_openskyCacheSourceEpochMs, now) &&
@@ -546,16 +557,20 @@ export function openSkyProxy() {
               requestedMode: cachedMeta.requestedMode || requestedMode,
               usedMode: cachedMeta.usedMode || 'unknown',
               reason: isStale
-                ? _openskyCooldownStatus === 429
-                  ? 'rate_limited_serving_stale'
-                  : `upstream_http_${_openskyCooldownStatus}_serving_stale`
+                ? inCooldown
+                  ? _openskyCooldownStatus === 429
+                    ? 'rate_limited_serving_stale'
+                    : `upstream_http_${_openskyCooldownStatus}_serving_stale`
+                  : 'opensky_unreachable_serving_stale'
                 : cachedMeta.reason || 'cached',
               staleSeconds: isStale
                 ? (now - _openskyCacheTime) / 1000
                 : undefined,
               retryAfterSeconds: inCooldown
                 ? (_openskyCooldownUntil - now) / 1000
-                : undefined,
+                : unreachable
+                  ? (_openskyUnreachableUntil - now) / 1000
+                  : undefined,
             }),
           );
           res.end(_openskyCacheBody);
@@ -590,6 +605,38 @@ export function openSkyProxy() {
           res.end(
             JSON.stringify({
               error: 'OpenSky upstream unavailable; proxy cooling down.',
+            }),
+          );
+          return;
+        }
+
+        // The host recently timed out or refused connections with nothing
+        // cached. Skip the attempts (and their timeouts) and answer from the
+        // regional feed right away.
+        if (unreachable) {
+          if (
+            await serveAdsbLolPointFallback(
+              req,
+              res,
+              requestedMode,
+              'opensky_unreachable_regional_fallback',
+              _openskyUnreachableDiagnostics,
+            )
+          )
+            return;
+          res.writeHead(502, {
+            ...buildOpenSkyHeaders({
+              cacheStatus: 'MISS',
+              requestedMode,
+              usedMode: 'none',
+              reason: 'opensky_unreachable',
+              retryAfterSeconds: (_openskyUnreachableUntil - now) / 1000,
+            }),
+            ..._openskyUnreachableDiagnostics,
+          });
+          res.end(
+            JSON.stringify({
+              error: 'OpenSky unreachable; no regional snapshot available.',
             }),
           );
           return;
@@ -671,6 +718,8 @@ export function openSkyProxy() {
               );
               _openskyTtlMs = openskyAdaptiveTtlMs(remaining);
               _openskyCooldownUntil = 0;
+              _openskyUnreachableUntil = 0;
+              _openskyUnreachableDiagnostics = null;
             }
 
             return {
@@ -781,6 +830,12 @@ export function openSkyProxy() {
           'X-OpenSky-Credentials':
             openSkyClientCredentials() !== null ? 'present' : 'absent',
         };
+        // An oversized upstream body means the host answered, so only a real
+        // transport failure (timeout, reset, DNS) opens the unreachable window.
+        if (e?.code !== 'RESPONSE_TOO_LARGE') {
+          _openskyUnreachableUntil = Date.now() + OPENSKY_UNREACHABLE_MS;
+          _openskyUnreachableDiagnostics = diagnostics;
+        }
         if (_openskyCacheBody) {
           const cachedMeta = _openskyCacheMeta || {
             requestedMode: normalizeOpenSkyAuthMode(
