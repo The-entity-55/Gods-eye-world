@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { test } from 'node:test';
-import handler from '../../api/[...path].js';
+import handler from '../../api/index.js';
+import { ensureApiUrl } from './handler.js';
 import { dispatch, createMiddlewareRouter } from './router.js';
 
 function listen(handle) {
@@ -77,6 +78,61 @@ test('answers unknown routes with JSON 404 instead of an HTML fallback', async (
     const result = await call(server, '/api/unknown');
     assert.equal(result.status, 404);
     assert.deepEqual(result.body, { error: 'Unknown API route' });
+  } finally {
+    await close(server);
+  }
+});
+
+test('recovers a nested path the platform rewrite moved into gevPath', () => {
+  const req = {
+    url: '/api/index?gevPath=tomtom/flow/5/1/2.pbf&z=5',
+    query: { gevPath: 'tomtom/flow/5/1/2.pbf', z: '5' },
+  };
+  ensureApiUrl(req);
+  assert.equal(req.url, '/api/tomtom/flow/5/1/2.pbf?z=5');
+});
+
+test('keeps encoded separators inside a captured route segment', () => {
+  const upstream = 'https%3A%2F%2Fexample.com%2Ffeed';
+  const req = {
+    url: `/api/index?gevPath=gbfs/${upstream}`,
+    query: { gevPath: `gbfs/${upstream}` },
+  };
+  ensureApiUrl(req);
+  assert.equal(req.url, `/api/gbfs/${upstream}`);
+});
+
+test('decodes a captured path that was inserted wholly encoded', () => {
+  const req = {
+    url: '/api/index?gevPath=celestrak%2Fstations',
+    query: { gevPath: 'celestrak/stations' },
+  };
+  ensureApiUrl(req);
+  assert.equal(req.url, '/api/celestrak/stations');
+});
+
+test('leaves an already rooted api url untouched', () => {
+  const req = { url: '/api/celestrak/stations?x=1', query: {} };
+  ensureApiUrl(req);
+  assert.equal(req.url, '/api/celestrak/stations?x=1');
+});
+
+test('serves nested routes through the platform rewrite', async () => {
+  // Mirror vercel.json: /api/<rest>?<query> → /api/index?gevPath=<rest>&<query>.
+  const server = await listen((req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    if (/^\/api\//.test(url.pathname) && url.pathname !== '/api/index') {
+      const params = new URLSearchParams(url.search);
+      params.set('gevPath', url.pathname.slice('/api/'.length));
+      req.query = Object.fromEntries(params);
+      req.url = `/api/index?${params}`;
+    }
+    return handler(req, res);
+  });
+  try {
+    const nested = await call(server, '/api/terrain/heights');
+    assert.equal(nested.status, 400);
+    assert.match(nested.body.error, /points/i);
   } finally {
     await close(server);
   }

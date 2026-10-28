@@ -4,8 +4,14 @@
   "installCommand": "PUPPETEER_SKIP_DOWNLOAD=1 npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/:gevPath*",
+      "destination": "/api/index?gevPath=:gevPath*"
+    }
+  ],
   "functions": {
-    "api/*.js": {
+    "api/index.js": {
       "memory": 1024,
       "maxDuration": 60,
       "includeFiles": "config/**"
