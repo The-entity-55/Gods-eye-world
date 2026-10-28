@@ -426,7 +426,13 @@ async function fetchAdsbLolPointFallback(req) {
   }
 }
 
-async function serveAdsbLolPointFallback(req, res, requestedMode, reason) {
+async function serveAdsbLolPointFallback(
+  req,
+  res,
+  requestedMode,
+  reason,
+  diagnostics = null,
+) {
   const fallback = await fetchAdsbLolPointFallback(req);
   if (!fallback) return false;
   res.writeHead(200, {
@@ -436,12 +442,27 @@ async function serveAdsbLolPointFallback(req, res, requestedMode, reason) {
       usedMode: 'adsblol-regional',
       reason,
     }),
+    ...diagnostics,
     'X-Flight-Source': 'adsb.lol',
     'X-Flight-Coverage': `${ADSBLOL_POINT_RADIUS_NM}nm regional fallback`,
     'X-Flight-Count': String(fallback.count),
   });
   res.end(fallback.body);
   return true;
+}
+
+/**
+ * A short, header-safe description of a failed upstream attempt. Serverless
+ * logs are not always reachable, so the reason travels back on the response
+ * instead of only the console.
+ * @param {unknown} error - The thrown value.
+ * @returns {string} e.g. `UND_ERR_CONNECT_TIMEOUT: fetch failed`.
+ */
+function upstreamErrorDetail(error) {
+  const code = error?.cause?.code || error?.code || '';
+  const message = String(error?.message || error || '');
+  const detail = [code, message].filter(Boolean).join(': ');
+  return detail.replace(/[^\x20-\x7e]/g, ' ').slice(0, 180) || 'unknown';
 }
 
 function openSkySourceEpochMs(body) {
@@ -488,6 +509,10 @@ export function openSkyProxy() {
         const requestedMode = normalizeOpenSkyAuthMode(
           process.env.OPENSKY_AUTH_MODE,
         );
+        const requestedAt = Date.now();
+        const credentialsPresent = openSkyClientCredentials() !== null;
+        /** Why the last upstream attempt ran in the mode it did. */
+        let authDetail = 'not_attempted';
         const now = Date.now();
         const inCooldown = now < _openskyCooldownUntil;
         // Fresh-enough cache (adaptive TTL) OR any cache during a 429
@@ -609,6 +634,7 @@ export function openSkyProxy() {
               }
             }
 
+            authDetail = reason;
             const { upstream, body } = await fetchOpenSkyStates(headers);
 
             const sourceEpochMs = upstream.ok
@@ -745,7 +771,15 @@ export function openSkyProxy() {
         );
         res.end(body);
       } catch (e) {
-        console.error('[OpenSky Proxy]', e.message);
+        const upstreamMs = Date.now() - requestedAt;
+        const errorDetail = upstreamErrorDetail(e);
+        console.error('[OpenSky Proxy]', errorDetail, `(${upstreamMs}ms)`);
+        const diagnostics = {
+          'X-OpenSky-Error': errorDetail,
+          'X-OpenSky-Upstream-Ms': String(upstreamMs),
+          'X-OpenSky-Last-Auth-Reason': authDetail,
+          'X-OpenSky-Credentials': credentialsPresent ? 'present' : 'absent',
+        };
         if (_openskyCacheBody) {
           const cachedMeta = _openskyCacheMeta || {
             requestedMode: normalizeOpenSkyAuthMode(
@@ -776,18 +810,19 @@ export function openSkyProxy() {
             res,
             requestedMode,
             'opensky_proxy_error_regional_fallback',
+            diagnostics,
           )
         )
           return;
-        res.writeHead(
-          502,
-          buildOpenSkyHeaders({
+        res.writeHead(502, {
+          ...buildOpenSkyHeaders({
             cacheStatus: 'MISS',
             requestedMode,
             usedMode: 'error',
             reason: 'proxy_error',
           }),
-        );
+          ...diagnostics,
+        });
         res.end(JSON.stringify({ error: 'OpenSky proxy error' }));
       }
     });
